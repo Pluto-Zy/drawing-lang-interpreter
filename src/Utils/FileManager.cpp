@@ -1,7 +1,6 @@
 #include <Utils/FileManager.h>
 #include <fstream>
 #include <iterator>
-#include <algorithm>
 
 INTERPRETER_NAMESPACE_BEGIN
 
@@ -12,17 +11,18 @@ namespace fs = ::std::filesystem;
  */
 static std::error_code is_valid_file(const std::filesystem::path &file_path) {
   std::error_code ec;
-  fs::is_regular_file(file_path, ec);
+  bool result = fs::is_regular_file(file_path, ec);
+  if (!result)
+    return std::make_error_code(std::errc::invalid_argument);
   return ec;
 }
 
 bool file_manager::_reset_to_new_buf(std::size_t file_size) {
-  std::size_t _buf_size = _file_name_length + file_size;
-  auto _temp_buf = static_cast<char*>(operator new[](_buf_size, std::nothrow));
+  auto _temp_buf = static_cast<char*>(operator new[](file_size, std::nothrow));
   if (!_temp_buf)
     return false;
   _data_buf.reset(_temp_buf);
-  _length = _buf_size;
+  _length = file_size;
   return true;
 }
 
@@ -31,15 +31,11 @@ std::error_code file_manager::_read_file_and_set_to_buf(const std::filesystem::p
   std::ifstream fin(file_path);
   if (!fin.is_open())
     return std::make_error_code(std::errc::invalid_argument);
-  // copy the file name to the start of the buffer
-
-  // we cannot use std::copy_n(file_path.string().begin(), file_path.string().end(), ...)
-  // because it will return two different strings so that `begin()` and `end()` will point
-  // to different arrays.
-  auto ptr = std::copy_n(file_path.c_str(), file_path.string().size(),
-            _data_buf.get());
-  *ptr = '\0';  // set null terminator
-  fin.read(const_cast<char*>(get_file_buf_begin()), get_file_buf_end() - get_file_buf_begin());
+  _file_name = file_path;
+  fin.read(_data_buf.get(), _length);
+  // FIXME: Consider more about this code.
+  for (; _data_buf[_length - 1] < 0; --_length)
+    ;
   fin.close();
   return std::make_error_code(std::errc());
 }

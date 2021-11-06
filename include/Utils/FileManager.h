@@ -26,11 +26,6 @@ INTERPRETER_NAMESPACE_BEGIN
 class file_manager {
 private:
   /**
-   * The length of the buffer used to store the
-   * file name at the beginning of the buffer.
-   */
-  constexpr static std::size_t _file_name_length = 256;
-  /**
    * The buffer used to save the contents of the file.
    */
   std::unique_ptr<char[]> _data_buf;
@@ -38,6 +33,9 @@ private:
    * The length of the data buffer.
    */
   std::size_t _length;
+
+  using _file_name_t = std::basic_string<std::filesystem::path::value_type>;
+  _file_name_t _file_name;
 
   /**
    * Calculates the real length of the buffer according to @code{file_size}
@@ -49,24 +47,21 @@ private:
    */
   [[nodiscard]] bool _reset_to_new_buf(std::size_t file_size);
   /**
-   * Reads the content of the file. Save the file name
-   * and file content to the buffer.
+   * Reads the content of the file. Save the file content to the buffer.
    */
   [[nodiscard]] std::error_code _read_file_and_set_to_buf(const std::filesystem::path& file_path);
 public:
-  file_manager() = default;
+  file_manager() : _data_buf(nullptr), _length(0), _file_name() { }
 
   /**
    * @return Returns a pointer to the starting position
    * of the buffer that holds the contents of the file.
    */
-  const char* get_file_buf_begin() const { return &_data_buf[_file_name_length]; }
+  const char* get_file_buf_begin() const { return _data_buf.get(); }
   const char* get_file_buf_end() const { return _data_buf.get() + _length; }
-  [[nodiscard]] string_ref get_file_name() const {
-    return {_data_buf.get()};
-  }
-  bool is_invalid() const { return _length < _file_name_length; }
-  std::size_t file_size() const { return _length - _file_name_length; }
+  [[nodiscard]] const auto& get_file_name() const { return _file_name; }
+  bool is_invalid() const { return !_data_buf; }
+  std::size_t file_size() const { return _length; }
 
   [[nodiscard]] std::error_code from_file(const std::filesystem::path& file_path);
 };
