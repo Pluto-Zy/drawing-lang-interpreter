@@ -20,6 +20,7 @@
 #include "StringRef.h"
 #include <filesystem>
 #include <memory>
+#include <utility>
 
 INTERPRETER_NAMESPACE_BEGIN
 
@@ -28,7 +29,7 @@ private:
   /**
    * The buffer used to save the contents of the file.
    */
-  std::unique_ptr<char[]> _data_buf;
+  std::unique_ptr<const char[]> _data_buf;
   /**
    * The length of the data buffer.
    */
@@ -36,20 +37,12 @@ private:
 
   using _file_name_t = std::basic_string<std::filesystem::path::value_type>;
   _file_name_t _file_name;
-
-  /**
-   * Calculates the real length of the buffer according to @code{file_size}
-   * and allocates an uninitialized buffer, then save the pointer in the
-   * smart pointer.
-   * @param file_size The length of the file content.
-   * @return Returns @code{false} if there is no enough memory to save the buffer,
-   *         otherwise returns @code{true}.
-   */
-  [[nodiscard]] bool _reset_to_new_buf(std::size_t file_size);
   /**
    * Reads the content of the file. Save the file content to the buffer.
+   * This method will allocate enough memory to save the content.
    */
-  [[nodiscard]] std::error_code _read_file_and_set_to_buf(const std::filesystem::path& file_path);
+  [[nodiscard]] std::error_code _read_file_and_set_to_buf(const std::filesystem::path& file_path,
+                                                          std::uintmax_t file_size);
 public:
   file_manager() : _data_buf(nullptr), _length(0), _file_name() { }
 
@@ -64,6 +57,10 @@ public:
   std::size_t file_size() const { return _length; }
 
   [[nodiscard]] std::error_code from_file(const std::filesystem::path& file_path);
+protected:
+  // only used for unit test
+  file_manager(const char* buf, std::size_t length, _file_name_t file_name) :
+    _data_buf(buf), _length(length), _file_name(std::move(file_name)) { }
 };
 
 INTERPRETER_NAMESPACE_END
