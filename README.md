@@ -30,3 +30,14 @@ It will be completed when I write the parser.
    source file and manages the lifetime of the buffer.
 2. Lexer
    + `token_kind`: Defines the kind of token. 
+3. Diagnosis
+
+   The diagnostics subsystem is used to send the error 
+or warning information found by the interpreter to the user.
+   + `diag_data` saves the relevant attributes of the diagnosis result.
+   + The DiagTypes.h file defines all diagnostic information that can be reported.
+   + `diag_engine` is used to generate a diagnostic object.
+   + `diag_builder` is used to replace the placeholders in the diagnostic message with the 
+   actual parameters provided by the interpreter.
+   + `diag_consumer` defines the way to show diagnostic information to the user.
+
