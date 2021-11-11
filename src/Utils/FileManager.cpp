@@ -29,7 +29,7 @@ std::error_code file_manager::_read_file_and_set_to_buf(const std::filesystem::p
   _file_name = file_path;
   fin.read(_temp_buf.get(), file_size);
   // FIXME: Consider more about this code.
-  for (; _temp_buf[file_size - 1] < 0; --file_size)
+  for (; _temp_buf[file_size - 1] <= 0; --file_size)
     ;
   fin.close();
   _data_buf = std::move(_temp_buf);
