@@ -27,13 +27,9 @@ std::error_code file_manager::_read_file_and_set_to_buf(const std::filesystem::p
   if (!fin.is_open())
     return std::make_error_code(std::errc::invalid_argument);
   _file_name = file_path;
-  fin.read(_temp_buf.get(), file_size);
-  // FIXME: Consider more about this code.
-  for (; _temp_buf[file_size - 1] <= 0; --file_size)
-    ;
+  _length = fin.read(_temp_buf.get(), file_size).gcount();
   fin.close();
   _data_buf = std::move(_temp_buf);
-  _length = file_size;
   return std::make_error_code(std::errc());
 }
 
