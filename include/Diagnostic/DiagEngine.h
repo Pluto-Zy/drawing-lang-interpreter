@@ -51,7 +51,7 @@ enum note_types {
 
 class diag_engine {
 public:
-  diag_engine() : _file_manager(nullptr) { }
+  diag_engine() : _file_manager(nullptr), _diag_consumer(nullptr) { }
   void set_file(const file_manager* manager);
   void set_consumer(diag_consumer* consumer);
 
