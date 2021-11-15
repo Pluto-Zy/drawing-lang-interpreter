@@ -143,6 +143,9 @@ constexpr bool operator>=(string_ref lhs, string_ref rhs) {
   return !(lhs < rhs);
 }
 
+std::size_t hash_value(string_ref s);
+std::size_t hash_value_lower_case(string_ref s);
+
 INTERPRETER_NAMESPACE_END
 
 #endif //DRAWING_LANG_INTERPRETER_STRINGREF_H

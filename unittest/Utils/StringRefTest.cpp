@@ -81,6 +81,17 @@ TEST(string_ref_test, compare) {
   EXPECT_GT(string_ref("AaB").compare_insensitive("aA"), 0);
   EXPECT_EQ(string_ref("AaB").compare_insensitive("aab"), 0);
 }
+
+TEST(string_ref_test, hash) {
+  std::string s = "data";
+  auto h = hash_value(static_cast<string_ref>(s));
+  EXPECT_EQ(h, hash_value(string_ref("data")));
+  EXPECT_NE(h, hash_value(string_ref("data ")));
+  EXPECT_NE(h, hash_value(string_ref("dat")));
+  EXPECT_NE(h, hash_value(string_ref("deta")));
+  EXPECT_NE(h, hash_value("DatA"));
+  EXPECT_EQ(h, hash_value_lower_case(string_ref("DatA")));
+}
 } // namespace
 
 INTERPRETER_NAMESPACE_END
