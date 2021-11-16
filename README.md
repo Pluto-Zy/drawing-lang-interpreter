@@ -19,6 +19,52 @@ make myself able to deal with various practical
 situations, for which I refer to the implementation of 
 LLVM/clang a lot.
 
+### Lex
+
+There are some keywords in the language, which are defined in include/Lex/KeywordDef.h.
+
++ `origin`
++ `scale`
++ `rot`
++ `is`
++ `to`
++ `step`
++ `draw`
++ `for`
++ `from`
++ `t`
+
+Keywords are not case-sensitive.
+
+There are also some operators:
+
++ `;`
++ `(` and `)`
++ `,`
++ `+` `-` `*` `/` and `**`
+
+The rules for identifiers in the languages are similar to 
+those in most languages. As required, the identifier should 
+consist of letters followed by any number of letters or numbers.
+I additionally allow underscores(`_`) in the identifier.
+
+All numbers in this language are floating point numbers and support 
+(optional) decimal point. However, there are some special cases:
+
+1. How to deal with `1.1.1`? If the lexer combines `1.1.1` into a 
+complete token to represent a literal value, and then reports that 
+the literal value does not conform to the specification, this will 
+make the error message clearer. However, strictly speaking, `1.1.1`
+is not a legal token, so the lexer will generate a token with a 
+value of 1.1 and complain about the invalid character "`.`".
+2. How to deal with `0001`? The lexer will treat it as a constant.
+3. Should the lexer convert the sequence of characters that represent 
+numbers into real floating-point numbers? Here I chose the same approach 
+as clang, that is, no conversion.
+
+This is a hand-written lexer. The lexer will cache the obtained 
+token to implement `look_ahead`.
+
 ### Grammar
 It will be completed when I write the parser.
 
@@ -30,6 +76,9 @@ It will be completed when I write the parser.
    source file and manages the lifetime of the buffer.
 2. Lexer
    + `token_kind`: Defines the kind of token. 
+   + KeywordDef.h: Defines all of the keywords.
+   + `token`: Represents a token.
+   + `lexer`: The lexer.
 3. Diagnosis
 
    The diagnostics subsystem is used to send the error 
