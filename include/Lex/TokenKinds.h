@@ -6,7 +6,7 @@
 #ifndef DRAWING_LANG_INTERPRETER_TOKENKINDS_H
 #define DRAWING_LANG_INTERPRETER_TOKENKINDS_H
 
-#include "def.h"
+#include <Utils/def.h>
 
 INTERPRETER_NAMESPACE_BEGIN
 
@@ -15,17 +15,12 @@ enum class token_kind : unsigned char {
   tk_eof,
   tk_identifier,  // abc123
   tk_constant,    // 123.4
+
   // keywords
-  kw_origin,
-  kw_scale,
-  kw_rot,
-  kw_is,
-  kw_to,
-  kw_step,
-  kw_draw,
-  kw_for,
-  kw_from,
-  kw_t,
+#define keyword(spelling) kw_##spelling,
+#include "KeywordDef.h"
+#undef keyword
+
   // operators
   op_semi,      // ;
   op_l_paren,   // (
