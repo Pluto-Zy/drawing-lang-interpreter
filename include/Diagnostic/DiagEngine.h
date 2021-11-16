@@ -26,7 +26,6 @@
 INTERPRETER_NAMESPACE_BEGIN
 
 class file_manager;
-class diag_builder;
 class diag_consumer;
 class string_ref;
 struct diag_data;

@@ -37,12 +37,17 @@ constexpr diag_build_finish_t diag_build_finish;
 class diag_builder {
 public:
   diag_builder() = delete;
+  diag_builder(const diag_builder&) = delete;
+  diag_builder(diag_builder&&) noexcept;
+  diag_builder& operator=(const diag_builder&) = delete;
+  diag_builder& operator=(diag_builder&&) noexcept;
   ~diag_builder();
 
   [[nodiscard]] const diag_data& get_diag_data() const { return *_internal_data; }
 
   const diag_builder& arg(string_ref argument) const;
   const diag_builder& arg(std::int64_t value) const;
+  const diag_builder& arg(char ch) const;
 
   /**
    * Replaces all replaceable placeholders with
@@ -65,14 +70,19 @@ private:
 
   std::string _process_escape_char(char ch) const;
 protected:
-  explicit diag_builder(diag_data* data) : _internal_data(data) { }
+  explicit diag_builder(diag_data* data);
 };
 
 inline const diag_builder& operator<<(const diag_builder& lhs, string_ref rhs) {
   return lhs.arg(rhs);
 }
 
-inline const diag_builder& operator<<(const diag_builder& lhs, std::int64_t rhs) {
+template<class RT, std::enable_if_t<std::is_integral_v<RT> && !std::is_same_v<RT, char>, int> = 0>
+inline const diag_builder& operator<<(const diag_builder& lhs, RT rhs) {
+  return lhs.arg(static_cast<std::int64_t>(rhs));
+}
+
+inline const diag_builder& operator<<(const diag_builder& lhs, char rhs) {
   return lhs.arg(rhs);
 }
 

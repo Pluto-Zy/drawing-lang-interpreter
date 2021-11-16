@@ -10,8 +10,6 @@
 
 INTERPRETER_NAMESPACE_BEGIN
 
-diag_builder::~diag_builder() = default;
-
 const diag_builder& diag_builder::arg(string_ref argument) const {
   _internal_data->_params.push_back(static_cast<std::string>(argument));
   return *this;
@@ -22,11 +20,16 @@ const diag_builder& diag_builder::arg(std::int64_t value) const {
   return *this;
 }
 
+const diag_builder& diag_builder::arg(char ch) const {
+  _internal_data->_params.push_back({ch});
+  return *this;
+}
+
 std::string diag_builder::_process_escape_char(char ch) const {
   // support '%' + digit and '%%' currently
   if (std::isdigit(ch)) {
     int idx = ch - '0';
-    if (idx < _internal_data->_params.size())
+    if (static_cast<std::size_t>(idx) < _internal_data->_params.size())
       return _internal_data->_params[idx];
   }
   if (ch == '%')
@@ -61,5 +64,10 @@ void diag_builder::report_to_consumer() const {
     _internal_data->consumer->report(_internal_data.get());
   }
 }
+
+diag_builder::diag_builder(diag_data* data) : _internal_data(data) { }
+diag_builder& diag_builder::operator=(diag_builder&&) noexcept = default;
+diag_builder::diag_builder(diag_builder&&) noexcept = default;
+diag_builder::~diag_builder() = default;
 
 INTERPRETER_NAMESPACE_END

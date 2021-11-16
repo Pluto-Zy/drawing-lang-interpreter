@@ -19,6 +19,10 @@ WARNING(warn_test_type, "This is a test warning message.")
 NOTE(note_test_type, "This is a test note message.")
 ERROR(err_test_with_param_type, "This is a test error message with param: %0.")
 
+// Lexer
+WARNING(null_in_file, "null character ignored")
+ERROR(err_unknown_char, "invalid character '%0'")
+
 #undef ERROR
 #undef WARNING
 #undef NOTE
