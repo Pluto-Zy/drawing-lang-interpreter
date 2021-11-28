@@ -92,6 +92,29 @@ TEST(string_ref_test, hash) {
   EXPECT_NE(h, hash_value("DatA"));
   EXPECT_EQ(h, hash_value_lower_case(string_ref("DatA")));
 }
+
+TEST(string_ref_test, edit_distance) {
+  string_ref hello("hello");
+  EXPECT_EQ(hello.edit_distance("hill"), 2U);
+  EXPECT_EQ(hello.edit_distance("HiLl", /* ignore_cases = */ true), 2U);
+
+  string_ref industry("industry");
+  EXPECT_EQ(industry.edit_distance("interest"), 6U);
+  EXPECT_EQ(industry.edit_distance("InTerESt", /* ignore_cases = */ true), 6U);
+
+  string_ref soylent("soylent green is people");
+  EXPECT_EQ(19U, soylent.edit_distance("people soiled our green"));
+  EXPECT_EQ(26U, soylent.edit_distance("people soiled our green",
+                                       /* ignore_cases = */ true,
+                                       /* allow_replacements = */ false));
+  EXPECT_EQ(9U, soylent.edit_distance("people soiled our green",
+                                      /* ignore_cases = */ false,
+                                      /* allow_replacements = */ true,
+                                      /* max_distance = */ 8));
+  EXPECT_EQ(53U, soylent.edit_distance("people soiled our green "
+                                       "people soiled our green "
+                                       "people soiled our green "));
+}
 } // namespace
 
 INTERPRETER_NAMESPACE_END

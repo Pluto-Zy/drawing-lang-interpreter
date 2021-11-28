@@ -109,7 +109,31 @@ public:
   /**
    * compares @code{*this} with @code{rhs} and ignores case.
    */
-  int compare_insensitive(string_ref rhs) const;
+  [[nodiscard]] int compare_insensitive(string_ref rhs) const;
+
+  /**
+   * Determines the edit distance between this string and another string.
+   *
+   * @param rhs the string to compare this string against.
+   *
+   * @param ignore_cases whether to ignore the case of letters when calculating.
+   *
+   * @param allow_replacements whether to allow character replacements
+   * (change one character into another) as a single operation, rather
+   * than as two operations (an insertion and a removal).
+   *
+   * @param max_distance If non-zero, the maximum edit distance that
+   * this routine is allowed to compute. If the edit distance will
+   * exceed that maximum, returns @code{max_distance+1}.
+   *
+   * @return the minimum number of character insertions, removals, or
+   * (if @param{allow_replacements} is @code{true}) replacements needed
+   * to transform one of the given strings into the other. If zero,
+   * the strings are identical.
+   */
+  [[nodiscard]] unsigned
+  edit_distance(string_ref rhs, bool ignore_cases = false,
+                bool allow_replacements = true, unsigned max_distance = 0) const;
 
   // operator overloads
   constexpr char operator[](size_type idx) const {

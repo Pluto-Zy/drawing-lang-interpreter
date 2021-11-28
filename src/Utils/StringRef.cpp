@@ -31,6 +31,58 @@ int string_ref::compare_insensitive(string_ref rhs) const {
   return 0;
 }
 
+unsigned string_ref::edit_distance(string_ref rhs, bool ignore_cases,
+                                   bool allow_replacements, unsigned int max_distance) const {
+  /*
+   * The same implementation of llvm::edit_distance.
+   * The algorithm is described at http://en.wikipedia.org/wiki/Levenshtein_distance.
+   */
+  size_type m = size();
+  size_type n = rhs.size();
+
+  constexpr unsigned small_buffer_size = 64;
+  unsigned small_buffer[small_buffer_size];
+  std::unique_ptr<unsigned[]> allocated;
+  unsigned* row = small_buffer;
+  if (n + 1 > small_buffer_size) {
+    row = new unsigned[n + 1];
+    allocated.reset(row);
+  }
+
+  for (unsigned i = 1; i <= n; ++i)
+    row[i] = i;
+
+  for (size_type y = 1; y <= m; ++y) {
+    row[0] = y;
+    unsigned best_this_row = row[0];
+    char cur_ch = static_cast<char>(ignore_cases ?
+        std::tolower((*this)[y - 1]) : (*this)[y - 1]);
+
+    unsigned previous = y - 1;
+    for (size_type x = 1; x <= n; ++x) {
+      int old_row = row[x];
+      char cur_rhs_ch = static_cast<char>(ignore_cases ?
+          std::tolower(rhs[x - 1]) : rhs[x - 1]);
+      if (allow_replacements) {
+        row[x] = std::min(previous + (cur_ch == cur_rhs_ch ? 0u : 1u),
+                          std::min(row[x - 1], row[x]) + 1);
+      } else {
+        if (cur_ch == cur_rhs_ch)
+          row[x] = previous;
+        else
+          row[x] = std::min(row[x - 1], row[x]) + 1;
+      }
+      previous = old_row;
+      best_this_row = std::min(best_this_row, row[x]);
+    }
+
+    if (max_distance && best_this_row > max_distance)
+      return max_distance + 1;
+  }
+
+  return row[n];
+}
+
 std::size_t hash_value(string_ref s) {
   std::size_t seed = 0;
   for (char ch : s) {
