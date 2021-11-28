@@ -54,15 +54,15 @@ struct diag_data {
   /**
    * The line number of the location to report.
    */
-  std::size_t line_idx;
+  std::size_t line_idx = 0;
   /**
    * The column number of the starting position of the range to be reported.
    */
-  std::size_t column_start_idx;
+  std::size_t column_start_idx = 0;
   /**
    * The column number of the ending position of the range to be reported.
    */
-  std::size_t column_end_idx;
+  std::size_t column_end_idx = 0;
   /**
    * Original diagnostic information.
    */
@@ -70,7 +70,7 @@ struct diag_data {
   /**
    * Represents whether the current object is valid.
    */
-  bool is_invalid;
+  bool is_invalid = false;
 
   /**
    * Saves the params used to replace the placeholders.
@@ -89,7 +89,7 @@ struct diag_data {
   /**
    * Consumer for reporting information.
    */
-  diag_consumer* consumer;
+  diag_consumer* consumer = nullptr;
 
   bool has_file_name() const { return !file_name.empty(); }
   bool has_line() const { return !source_line.empty(); }

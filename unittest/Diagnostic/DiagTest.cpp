@@ -209,6 +209,9 @@ TEST(diag_engine_test, location) {
     diag_builder result = engine.create_diag(err_test_type, 4, 5);
     const diag_data& data = result.get_diag_data();
     EXPECT_FALSE(data.has_line());
+    EXPECT_FALSE(data.has_column());
+    EXPECT_FALSE(data.is_column_range());
+    EXPECT_TRUE(data.has_file_name());
     EXPECT_TRUE(data.is_invalid);
   }
   {
