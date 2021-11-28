@@ -5,6 +5,7 @@
  */
 #include <Utils/StringRef.h>
 #include <functional>
+#include <memory>
 
 INTERPRETER_NAMESPACE_BEGIN
 
