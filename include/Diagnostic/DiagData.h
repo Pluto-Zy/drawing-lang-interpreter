@@ -20,6 +20,23 @@ INTERPRETER_NAMESPACE_BEGIN
 
 class diag_consumer;
 
+struct fix_hint {
+  /**
+   * The range of the column of characters to be replaced.
+   */
+  std::pair<std::size_t, std::size_t> replace_range;
+  /**
+   * The actual code to insert at the location.
+   */
+  std::string code_to_insert;
+
+  fix_hint() : replace_range(1, 0) { }
+
+  [[nodiscard]] bool is_valid() const {
+    return replace_range.first <= replace_range.second;
+  }
+};
+
 struct diag_data {
   // basic information of diagnostic data
   /**
@@ -65,14 +82,20 @@ struct diag_data {
   std::string _result_diag_message;
 
   /**
+   * provides a hint with some code to insert or modify
+   * at a particular position.
+   */
+  fix_hint fix;
+  /**
    * Consumer for reporting information.
    */
   diag_consumer* consumer;
 
   bool has_file_name() const { return !file_name.empty(); }
   bool has_line() const { return !source_line.empty(); }
-  bool has_column() const { return has_line(); }
+  bool has_column() const { return column_start_idx < column_end_idx; }
   bool is_column_range() const { return has_column() && column_end_idx - column_start_idx > 1; }
+  bool has_fix_hint() const { return fix.is_valid(); }
 };
 
 INTERPRETER_NAMESPACE_END

@@ -27,6 +27,7 @@
 INTERPRETER_NAMESPACE_BEGIN
 
 struct diag_data;
+struct fix_hint;
 
 struct diag_build_finish_t { };
 /**
@@ -48,6 +49,7 @@ public:
   const diag_builder& arg(string_ref argument) const;
   const diag_builder& arg(std::int64_t value) const;
   const diag_builder& arg(char ch) const;
+  const diag_builder& arg(fix_hint hint) const;
 
   /**
    * Replaces all replaceable placeholders with
@@ -91,6 +93,8 @@ inline const diag_builder& operator<<(const diag_builder& lhs, diag_build_finish
   lhs.report_to_consumer();
   return lhs;
 }
+
+const diag_builder& operator<<(const diag_builder& lhs, fix_hint hint);
 
 INTERPRETER_NAMESPACE_END
 

@@ -25,6 +25,11 @@ const diag_builder& diag_builder::arg(char ch) const {
   return *this;
 }
 
+const diag_builder& diag_builder::arg(fix_hint hint) const {
+  _internal_data->fix = std::move(hint);
+  return *this;
+}
+
 std::string diag_builder::_process_escape_char(char ch) const {
   // support '%' + digit and '%%' currently
   if (std::isdigit(ch)) {
@@ -66,8 +71,14 @@ void diag_builder::report_to_consumer() const {
 }
 
 diag_builder::diag_builder(diag_data* data) : _internal_data(data) { }
+
 diag_builder& diag_builder::operator=(diag_builder&&) noexcept = default;
 diag_builder::diag_builder(diag_builder&&) noexcept = default;
 diag_builder::~diag_builder() = default;
+
+const diag_builder& operator<<(const diag_builder& lhs, fix_hint hint) {
+  lhs.arg(std::move(hint));
+  return lhs;
+}
 
 INTERPRETER_NAMESPACE_END

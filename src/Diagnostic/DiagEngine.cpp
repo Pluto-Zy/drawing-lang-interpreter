@@ -87,9 +87,9 @@ diag_data* diag_engine::_create_diag_impl(string_ref diag_msg,
   result->consumer = _diag_consumer;
   // find the line number of the location
   bool invalid = false;
-  if (location_begin != location_end) {
+  if (location_begin <= location_end) {
     auto begin_line_opt = _get_line_num(location_begin, invalid);
-    auto end_line_opt = _get_line_num(location_end, invalid);
+    auto end_line_opt = location_begin != location_end ? _get_line_num(location_end, invalid) : begin_line_opt;
     if (begin_line_opt && end_line_opt) {
       result->line_idx = *begin_line_opt;
       result->source_line = _get_source_line(*begin_line_opt);
@@ -110,7 +110,7 @@ diag_data* diag_engine::_create_diag_impl(string_ref diag_msg,
 }
 
 diag_builder diag_engine::create_diag(error_types diag_type) const {
-  return create_diag(diag_type, 0, 0);
+  return create_diag(diag_type, 1, 0);
 }
 
 diag_builder diag_engine::create_diag(error_types diag_type,
@@ -127,7 +127,7 @@ diag_builder diag_engine::create_diag(error_types diag_type,
 }
 
 diag_builder diag_engine::create_diag(warning_types diag_type) const {
-  return create_diag(diag_type, 0, 0);
+  return create_diag(diag_type, 1, 0);
 }
 
 diag_builder diag_engine::create_diag(warning_types diag_type,
@@ -144,7 +144,7 @@ diag_builder diag_engine::create_diag(warning_types diag_type,
 }
 
 diag_builder diag_engine::create_diag(note_types diag_type) const {
-  return create_diag(diag_type, 0, 0);
+  return create_diag(diag_type, 1, 0);
 }
 
 diag_builder diag_engine::create_diag(note_types diag_type,
@@ -158,6 +158,32 @@ diag_builder diag_engine::create_diag(note_types diag_type,
   diag_data* result = _create_diag_impl(_diag_note_str[diag_type], start_loc, end_loc);
   result->level = diag_data::NOTE;
   return static_cast<diag_builder>(result);
+}
+
+fix_hint diag_engine::create_insertion_after_location(std::size_t location,
+                                                      string_ref code) const {
+  fix_hint result;
+  bool invalid = false;
+  auto line = _get_line_num(location, invalid);
+  if (!line)
+    return result;
+  std::size_t column = location - _lines[*line];
+  result.replace_range = {column + 1, column + 2};
+  result.code_to_insert = static_cast<std::string>(code);
+  return result;
+}
+
+fix_hint diag_engine::create_replacement(std::size_t beg, std::size_t end,
+                                         string_ref code) const {
+  fix_hint result;
+  bool invalid = false;
+  auto line = _get_line_num(beg, invalid);
+  if (!line)
+    return result;
+  result.replace_range.first = beg - _lines[*line];
+  result.replace_range.second = end - _lines[*line];
+  result.code_to_insert = static_cast<std::string>(code);
+  return result;
 }
 
 INTERPRETER_NAMESPACE_END

@@ -136,6 +136,19 @@ TEST(diag_engine_test, location) {
     EXPECT_EQ(data.column_end_idx, 1);
   }
   {
+    temp_file_manager manager("a\nand a new line");
+    engine.set_file(&manager);
+    diag_builder result = engine.create_diag(err_test_type, 3, 3);
+    const diag_data& data = result.get_diag_data();
+    EXPECT_EQ(data.source_line, "and a new line");
+    EXPECT_EQ(data.line_idx, 1);
+    EXPECT_EQ(data.column_start_idx, 1);
+    EXPECT_EQ(data.column_end_idx, 1);
+    EXPECT_FALSE(data.is_invalid);
+    EXPECT_TRUE(data.has_line());
+    EXPECT_FALSE(data.has_column());
+  }
+  {
     temp_file_manager manager("a\nb\n");
     engine.set_file(&manager);
     diag_builder result = engine.create_diag(err_test_type, 0, 1);
@@ -279,6 +292,60 @@ TEST(diag_builder_test, param) {
     EXPECT_EQ(consumer->get_data()._result_diag_message, "ab%0");
     test_diag_builder::create("ab", consumer.get()) << 1 << diag_build_finish;
     EXPECT_EQ(consumer->get_data()._result_diag_message, "ab");
+  }
+}
+
+TEST(diag_builder_test, fix_hint) {
+  diag_engine engine;
+  std::unique_ptr<test_diag_consumer> consumer = std::make_unique<test_diag_consumer>();
+  engine.set_consumer(consumer.get());
+  {
+    temp_file_manager manager("ab\nand a new line");
+    engine.set_file(&manager);
+    engine.create_diag(err_test_type)
+      << engine.create_insertion_after_location(4, "insert")
+      << diag_build_finish;
+    {
+      const diag_data& data = consumer->get_data();
+      EXPECT_EQ(data.origin_diag_message,
+                "This is a test error message.");
+      EXPECT_TRUE(data.has_fix_hint());
+      EXPECT_EQ(data.fix.replace_range,
+                (std::pair<std::size_t, std::size_t>{2, 3}));
+      EXPECT_EQ(data.fix.code_to_insert, "insert");
+    }
+    engine.create_diag(err_test_type)
+      << engine.create_replacement(0, 5, "insert2")
+      << diag_build_finish;
+    {
+      const diag_data& data = consumer->get_data();
+      EXPECT_TRUE(data.has_fix_hint());
+      EXPECT_EQ(data.fix.replace_range,
+                (std::pair<std::size_t, std::size_t>{0, 5}));
+      EXPECT_EQ(data.fix.code_to_insert, "insert2");
+    }
+    engine.create_diag(err_test_type)
+        << engine.create_replacement(6, 10, "insert3")
+        << diag_build_finish;
+    {
+      const diag_data& data = consumer->get_data();
+      EXPECT_TRUE(data.has_fix_hint());
+      EXPECT_EQ(data.fix.replace_range,
+                (std::pair<std::size_t, std::size_t>{3, 7}));
+      EXPECT_EQ(data.fix.code_to_insert, "insert3");
+    }
+    engine.create_diag(err_test_type)
+        << engine.create_replacement(6, 4, "insert4")
+        << diag_build_finish;
+    {
+      const diag_data& data = consumer->get_data();
+      EXPECT_FALSE(data.has_fix_hint());
+    }
+    engine.create_diag(err_test_type) << diag_build_finish;
+    {
+      const diag_data& data = consumer->get_data();
+      EXPECT_FALSE(data.has_fix_hint());
+    }
   }
 }
 

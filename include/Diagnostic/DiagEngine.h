@@ -80,6 +80,12 @@ public:
   [[nodiscard]] diag_builder create_diag(note_types diag_type,
                                          std::size_t start_loc,
                                          std::size_t end_loc) const;
+
+  [[nodiscard]] fix_hint create_insertion_after_location(std::size_t location,
+                                                         string_ref code) const;
+
+  [[nodiscard]] fix_hint create_replacement(std::size_t beg, std::size_t end,
+                                            string_ref code) const;
 private:
   const file_manager* _file_manager;
   diag_consumer* _diag_consumer;
