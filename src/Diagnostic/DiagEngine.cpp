@@ -11,21 +11,13 @@
 
 INTERPRETER_NAMESPACE_BEGIN
 
-std::vector<string_ref> _diag_err_str = {
-#define ERROR(err_type, err_str) err_str,
+std::vector<std::tuple<string_ref, decltype(diag_data::level)>> _diag_info = {
+#define ERROR(err_type, err_str) { err_str, diag_data::ERROR },
+#define WARNING(warning_type, warning_str) { warning_str, diag_data::WARNING },
+#define NOTE(note_type, note_str) { note_str, diag_data::NOTE },
 #include "Diagnostic/DiagTypes.h"
 #undef ERROR
-};
-
-std::vector<string_ref> _diag_warn_str = {
-#define WARNING(warning_type, warning_str) warning_str,
-#include "Diagnostic/DiagTypes.h"
 #undef WARNING
-};
-
-std::vector<string_ref> _diag_note_str = {
-#define NOTE(note_type, note_str) note_str,
-#include "Diagnostic/DiagTypes.h"
 #undef NOTE
 };
 
@@ -109,54 +101,20 @@ diag_data* diag_engine::_create_diag_impl(string_ref diag_msg,
   return result;
 }
 
-diag_builder diag_engine::create_diag(error_types diag_type) const {
+diag_builder diag_engine::create_diag(diag_id diag_type) const {
   return create_diag(diag_type, 1, 0);
 }
 
-diag_builder diag_engine::create_diag(error_types diag_type,
+diag_builder diag_engine::create_diag(diag_id diag_type,
                                       std::size_t location) const {
   return create_diag(diag_type, location, location + 1);
 }
 
-diag_builder diag_engine::create_diag(error_types diag_type,
+diag_builder diag_engine::create_diag(diag_id diag_type,
                                       std::size_t start_loc,
                                       std::size_t end_loc) const {
-  diag_data* result = _create_diag_impl(_diag_err_str[diag_type], start_loc, end_loc);
-  result->level = diag_data::ERROR;
-  return static_cast<diag_builder>(result);
-}
-
-diag_builder diag_engine::create_diag(warning_types diag_type) const {
-  return create_diag(diag_type, 1, 0);
-}
-
-diag_builder diag_engine::create_diag(warning_types diag_type,
-                                      std::size_t location) const {
-  return create_diag(diag_type, location, location + 1);
-}
-
-diag_builder diag_engine::create_diag(warning_types diag_type,
-                                      std::size_t start_loc,
-                                      std::size_t end_loc) const {
-  diag_data* result = _create_diag_impl(_diag_warn_str[diag_type], start_loc, end_loc);
-  result->level = diag_data::WARNING;
-  return static_cast<diag_builder>(result);
-}
-
-diag_builder diag_engine::create_diag(note_types diag_type) const {
-  return create_diag(diag_type, 1, 0);
-}
-
-diag_builder diag_engine::create_diag(note_types diag_type,
-                                      std::size_t location) const {
-  return create_diag(diag_type, location, location + 1);
-}
-
-diag_builder diag_engine::create_diag(note_types diag_type,
-                                      std::size_t start_loc,
-                                      std::size_t end_loc) const {
-  diag_data* result = _create_diag_impl(_diag_note_str[diag_type], start_loc, end_loc);
-  result->level = diag_data::NOTE;
+  diag_data* result = _create_diag_impl(std::get<0>(_diag_info[diag_type]), start_loc, end_loc);
+  result->level = std::get<1>(_diag_info[diag_type]);
   return static_cast<diag_builder>(result);
 }
 
