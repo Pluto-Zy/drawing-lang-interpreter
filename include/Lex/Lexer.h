@@ -20,16 +20,15 @@ INTERPRETER_NAMESPACE_BEGIN
 
 class lexer {
 public:
-  template<class DiagEngine, std::enable_if_t<std::is_lvalue_reference_v<DiagEngine&&>, int> = 0>
-  lexer(const char* file_begin, const char* file_end, DiagEngine&& engine)
+  lexer(const char* file_begin, const char* file_end, diag_engine& engine)
     : _buf_beg(file_begin), _buf_end(file_end), _buf_cur(_buf_beg),
-      _diag_engine(&engine), _token_cache_list{token()} { }
+      _diag_engine(engine), _token_cache_list{token()} { }
 
-  template<class DiagEngine, std::enable_if_t<std::is_lvalue_reference_v<DiagEngine&&>, int> = 0>
-  lexer(const file_manager* file_manager, DiagEngine&& diag);
+  lexer(const file_manager* file_manager, diag_engine& diag);
 
   bool at_end() const { return _buf_cur == _buf_end; }
   std::size_t get_current_loc() const { return _buf_cur - _buf_beg; }
+  diag_engine& get_diag_engine() const { return _diag_engine; }
 
   /**
    * Returns the next token and discards it.
@@ -89,7 +88,7 @@ private:
   /**
    * The diagnostic engine used to report errors.
    */
-  const diag_engine* _diag_engine;
+  diag_engine& _diag_engine;
   /**
    * Caches all tokens that have been lexed but not consumed.
    * In particular, the most recently discarded token will
@@ -109,9 +108,9 @@ private:
   /**
    * Helper function used to make a diagnostic message
    */
-  template<class MessageType, class... LocTy>
-  diag_builder diag(MessageType message, LocTy... locs) {
-    return _diag_engine->create_diag(message, locs...);
+  template<class... LocTy>
+  diag_builder diag(diag_id message, LocTy... locs) {
+    return _diag_engine.create_diag(message, locs...);
   }
   /**
    * Internal interface to lex a token.
@@ -132,14 +131,12 @@ private:
   void _lex_n_and_cache(std::size_t count);
 };
 
-template<class DiagEngine, std::enable_if_t<std::is_lvalue_reference_v<DiagEngine&&>, int>>
-inline lexer::lexer(const drawing::file_manager *file_manager, DiagEngine&& diag)
-  : _token_cache_list{token()} {
+inline lexer::lexer(const drawing::file_manager *file_manager, diag_engine& diag)
+  : _diag_engine(diag), _token_cache_list{token()} {
   if (file_manager) {
     _buf_cur = _buf_beg = file_manager->get_file_buf_begin();
     _buf_end = file_manager->get_file_buf_end();
   }
-  _diag_engine = &diag;
 }
 
 INTERPRETER_NAMESPACE_END

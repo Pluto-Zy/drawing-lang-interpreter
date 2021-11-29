@@ -237,24 +237,24 @@ void lexer::lex_until_eol() {
   };
   if (_token_cache_list.size() > 1) {
     for (auto cur = _token_cache_list.begin(), prev = cur++; cur != _token_cache_list.end(); prev = cur++) {
-      if (_has_new_line_checker(prev->get_location() + prev->get_length(), cur->get_location())) {
+      if (_has_new_line_checker(prev->get_end_location(), cur->get_start_location())) {
         // Regenerate the prev token
-        prev->set_location(prev->get_location() + prev->get_length());
-        prev->set_data(string_ref(_buf_beg + prev->get_location(),
-                                  cur->get_location() - prev->get_location()));
+        prev->set_location(prev->get_end_location());
+        prev->set_data(string_ref(_buf_beg + prev->get_start_location(),
+                                  cur->get_start_location() - prev->get_start_location()));
         prev->set_kind(token_kind::tk_unknown);
         return;
       }
       cur = _token_cache_list.erase(prev);
     }
   } else if (!_token_cache_list.empty()) {
-    if (_has_new_line_checker(_token_cache_list.front().get_location() + _token_cache_list.front().get_length(),
+    if (_has_new_line_checker(_token_cache_list.front().get_end_location(),
                               get_current_loc())) {
       // Regenerate the prev token
       token& prev = _token_cache_list.front();
-      prev.set_location(prev.get_location() + prev.get_length());
-      prev.set_data(string_ref(_buf_beg + prev.get_location(),
-                               get_current_loc() - prev.get_location()));
+      prev.set_location(prev.get_end_location());
+      prev.set_data(string_ref(_buf_beg + prev.get_start_location(),
+                               get_current_loc() - prev.get_start_location()));
       prev.set_kind(token_kind::tk_unknown);
       return;
     }

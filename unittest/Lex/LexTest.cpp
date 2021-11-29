@@ -84,6 +84,19 @@ protected:
   }
 };
 
+TEST(TokenTest, token) {
+  token t;
+  t.set_kind(token_kind::op_minus);
+  EXPECT_TRUE(t.is_operator());
+  EXPECT_FALSE(t.is_keyword());
+  t.set_kind(token_kind::kw_scale);
+  EXPECT_TRUE(t.is_keyword());
+  EXPECT_FALSE(t.is_operator());
+  t.set_kind(token_kind::tk_identifier);
+  EXPECT_FALSE(t.is_keyword());
+  EXPECT_FALSE(t.is_operator());
+}
+
 TEST_F(LexerTest, lexIdentifier) {
   {
     lexer l = generate_lexer("abc abc123 _a_b\na_ _1 _A _ __ a1_2b_c abc+");
