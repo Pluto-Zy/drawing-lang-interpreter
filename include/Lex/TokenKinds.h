@@ -43,6 +43,18 @@ constexpr bool is_operator(token_kind kind) {
 #undef op
 }
 
+constexpr string_ref get_spelling(token_kind kind) {
+  switch (kind) {
+#define keyword(spelling) case token_kind::kw_##spelling: return #spelling;
+#define op(name, spelling) case token_kind::op_##name: return spelling;
+#include "KeywordDef.h"
+#include "OpDef.h"
+
+    default:
+      return "";
+  }
+}
+
 INTERPRETER_NAMESPACE_END
 
 #endif //DRAWING_LANG_INTERPRETER_TOKENKINDS_H

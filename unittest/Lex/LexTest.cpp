@@ -23,7 +23,7 @@ class test_file_manager : public file_manager {
 public:
   template<std::size_t N>
   test_file_manager(const char(&str)[N]) :
-      file_manager(copy(str), N - 1,
+      file_manager(copy(str), N /* with new line character */,
                    generate_temp_file_name<
                        std::remove_cv_t<
                            std::remove_reference_t<
@@ -31,9 +31,11 @@ public:
 
   template<std::size_t N>
   [[nodiscard]] char* copy(const char(&str)[N]) const {
-    static_assert(N > 0, "cannot use zero-length string");
-    char* result = new char[N - 1];
+    static_assert(N > 1, "cannot use zero-length string");
+    assert(str[N - 2] != '\n');
+    char* result = new char[N];
     std::memcpy(result, str, N - 1);
+    result[N - 1] = '\n';
     return result;
   }
 };
@@ -95,6 +97,12 @@ TEST(TokenTest, token) {
   t.set_kind(token_kind::tk_identifier);
   EXPECT_FALSE(t.is_keyword());
   EXPECT_FALSE(t.is_operator());
+
+  EXPECT_EQ(get_spelling(token_kind::kw_origin), "origin");
+  EXPECT_EQ(get_spelling(token_kind::kw_t), "t");
+  EXPECT_EQ(get_spelling(token_kind::op_star_star), "**");
+  EXPECT_EQ(get_spelling(token_kind::op_comma), ",");
+  EXPECT_EQ(get_spelling(token_kind::tk_constant), "");
 }
 
 TEST_F(LexerTest, lexIdentifier) {

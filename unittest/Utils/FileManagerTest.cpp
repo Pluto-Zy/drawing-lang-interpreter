@@ -89,6 +89,7 @@ TEST(file_manager_test, read_file) {
     std::string input_data = "some data";
     out << input_data;
     out.close();
+    input_data += '\n';
 
     file_manager manager;
     EXPECT_FALSE(manager.from_file(temp_file_path));
@@ -110,6 +111,8 @@ TEST(file_manager_test, read_file) {
   for (std::size_t i = 0; i < std::size(datas); ++i) {
     auto ptr = factory.get_file_manager_from_temp_file(datas[i]);
     ASSERT_TRUE(ptr);
+    if (datas[i].back() != '\n')
+      datas[i] += '\n';
     EXPECT_EQ(ptr->file_size(), datas[i].size()) << "input data idx: " << i;
     EXPECT_EQ(string_ref(ptr->get_file_buf_begin(), ptr->file_size()), string_ref(datas[i]));
   }

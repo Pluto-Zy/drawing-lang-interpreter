@@ -20,7 +20,7 @@ static std::error_code is_valid_file(const std::filesystem::path &file_path) {
 std::error_code file_manager::_read_file_and_set_to_buf(const std::filesystem::path& file_path,
                                                         std::uintmax_t file_size) {
   // FIXME: The code can be better and more efficient.
-  std::unique_ptr<char[]> _temp_buf(static_cast<char*>(operator new[](file_size, std::nothrow)));
+  std::unique_ptr<char[]> _temp_buf(static_cast<char*>(operator new[](file_size + 1, std::nothrow)));
   if (!_temp_buf)
     return std::make_error_code(std::errc::not_enough_memory);
   std::ifstream fin(file_path);
@@ -29,6 +29,9 @@ std::error_code file_manager::_read_file_and_set_to_buf(const std::filesystem::p
   _file_name = file_path;
   _length = fin.read(_temp_buf.get(), file_size).gcount();
   fin.close();
+  // if the end of the file is not '\n', add it
+  if (!_length || _temp_buf[_length - 1] != '\n')
+    _temp_buf[_length++] = '\n';
   _data_buf = std::move(_temp_buf);
   return std::make_error_code(std::errc());
 }
