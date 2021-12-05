@@ -141,11 +141,12 @@ TEST_F(LexerTest, lexNum) {
 
 TEST_F(LexerTest, lexOperator) {
   {
-    lexer l = generate_lexer(";)(,-+/**** * **");
+    lexer l = generate_lexer(";)(,-+/}{**** * **");
     std::vector<token_kind> expect = {
         token_kind::op_semi, token_kind::op_r_paren, token_kind::op_l_paren,
         token_kind::op_comma, token_kind::op_minus, token_kind::op_plus,
-        token_kind::op_slash, token_kind::op_star_star, token_kind::op_star_star,
+        token_kind::op_slash, token_kind::op_r_brace, token_kind::op_l_brace,
+        token_kind::op_star_star, token_kind::op_star_star,
         token_kind::op_star, token_kind::op_star_star
     };
     check_same(expect, lex_all(l));

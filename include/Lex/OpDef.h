@@ -14,5 +14,7 @@ op(minus, "-")
 op(star, "*")
 op(slash, "/")
 op(star_star, "**")
+op(l_brace, "{")
+op(r_brace, "}")
 
 #undef op

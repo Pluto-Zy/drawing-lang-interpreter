@@ -115,6 +115,12 @@ Restart:
     case ')':
       kind = token_kind::op_r_paren;
       break;
+    case '{':
+      kind = token_kind::op_l_brace;
+      break;
+    case '}':
+      kind = token_kind::op_r_brace;
+      break;
     case '*':
       if (CUR_IS('*')) {
         ++_buf_cur;
