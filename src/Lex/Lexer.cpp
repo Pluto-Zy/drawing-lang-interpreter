@@ -74,7 +74,10 @@ Restart:
   token_kind kind;
   if (at_end()) {
     result.set_kind(token_kind::tk_eof);
-    result.set_location(get_current_loc());
+    // FIXME: `-1` means that the position of
+    //  the token of EOF is the position of
+    //  the last newline character.
+    result.set_location(get_current_loc() - 1);
     return;
   }
   switch(*_buf_cur++) {
