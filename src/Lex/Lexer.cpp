@@ -65,6 +65,22 @@ void lexer::_lex_identifier(token& result, const char* start_ptr) {
     result.set_kind(iter->second);
   }
 }
+/**
+ * Lex the remainder of a string
+ */
+void lexer::_lex_string(token& result, const char* start_ptr) {
+  for (; !at_end() && *_buf_cur != '"' && *_buf_cur != '\n'; ++_buf_cur) {
+    if (*_buf_cur == '\\')  // escape
+      ++_buf_cur;
+  }
+  if (at_end() || *_buf_cur != '"') {
+    diag(warn_miss_str_terminate, start_ptr - _buf_beg) << diag_build_finish;
+    _form_token_from_range(result, start_ptr, token_kind::tk_unknown);
+  } else {
+    ++_buf_cur;
+    _form_token_from_range(result, start_ptr, token_kind::tk_string);
+  }
+}
 
 void lexer::_lex_impl(token &result) {
   if (!_buf_cur)
@@ -112,6 +128,9 @@ Restart:
     case '_':
       _lex_identifier(result, start_token_ptr);
       return;   // cannot use `break` here
+    case '"':
+      _lex_string(result, start_token_ptr);
+      return;
     case '(':
       kind = token_kind::op_l_paren;
       break;

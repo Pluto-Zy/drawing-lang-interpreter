@@ -15,6 +15,7 @@ enum class token_kind : unsigned char {
   tk_eof,
   tk_identifier,  // abc123
   tk_constant,    // 123.4
+  tk_string,      // "abc"
 
   // keywords
 #define keyword(spelling) kw_##spelling,

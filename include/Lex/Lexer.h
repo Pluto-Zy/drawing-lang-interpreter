@@ -127,6 +127,7 @@ private:
 
   void _lex_float_constant(token& result, const char* start_ptr);
   void _lex_identifier(token& result, const char* start_ptr);
+  void _lex_string(token& result, const char* start_ptr);
 
   void _lex_n_and_cache(std::size_t count);
 };
