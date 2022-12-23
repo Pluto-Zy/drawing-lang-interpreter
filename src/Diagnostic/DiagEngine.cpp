@@ -8,7 +8,6 @@
 #include <Diagnostic/DiagData.h>
 #include <Utils/FileManager.h>
 #include <algorithm>
-#include <iostream>
 
 INTERPRETER_NAMESPACE_BEGIN
 

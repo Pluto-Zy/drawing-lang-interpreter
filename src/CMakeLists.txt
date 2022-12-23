@@ -1,3 +1,7 @@
-add_subdirectory("Lex")
 add_subdirectory("Utils")
 add_subdirectory("Diagnostic")
+add_subdirectory("Lex")
+add_subdirectory("Parse")
+add_subdirectory("Sema")
+add_subdirectory("AST")
+add_subdirectory("Interpreter")
