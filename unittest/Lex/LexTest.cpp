@@ -2,53 +2,9 @@
 #include <Lex/Lexer.h>
 #include <Diagnostic/DiagConsumer.h>
 #include <Diagnostic/DiagData.h>
+#include <MockTools.h>
 
 INTERPRETER_NAMESPACE_BEGIN
-
-template<class str_type>
-str_type generate_temp_file_name();
-
-template<>
-std::string generate_temp_file_name() {
-  return "temp_lex_file";
-}
-
-template<>
-std::wstring generate_temp_file_name() {
-  return L"temp_lex_file";;
-}
-
-namespace {
-class test_file_manager : public file_manager {
-public:
-  template<std::size_t N>
-  test_file_manager(const char(&str)[N]) :
-      file_manager(copy(str), N - 1,
-                   generate_temp_file_name<
-                       std::remove_cv_t<
-                           std::remove_reference_t<
-                               decltype(std::declval<file_manager>().get_file_name())>>>()) { }
-
-  template<std::size_t N>
-  [[nodiscard]] char* copy(const char(&str)[N]) const {
-    static_assert(N > 0, "cannot use zero-length string");
-    char* result = new char[N - 1];
-    std::memcpy(result, str, N - 1);
-    return result;
-  }
-};
-
-class test_diag_consumer : public diag_consumer {
-public:
-  void report(const diag_data *data) override {
-    this->data = *data;
-  }
-  const diag_data& get_data() const {
-    return data;
-  }
-private:
-  diag_data data;
-};
 
 class LexerTest : public ::testing::Test {
 protected:
@@ -62,6 +18,7 @@ protected:
 
   template<std::size_t N>
   lexer generate_lexer(const char(&str)[N]) {
+    consumer.clear();
     manager = std::make_unique<test_file_manager>(str);
     engine.set_file(manager.get());
     return {manager.get(), engine};
@@ -83,6 +40,25 @@ protected:
     }
   }
 };
+
+TEST(TokenTest, token) {
+  token t;
+  t.set_kind(token_kind::op_minus);
+  EXPECT_TRUE(t.is_operator());
+  EXPECT_FALSE(t.is_keyword());
+  t.set_kind(token_kind::kw_scale);
+  EXPECT_TRUE(t.is_keyword());
+  EXPECT_FALSE(t.is_operator());
+  t.set_kind(token_kind::tk_identifier);
+  EXPECT_FALSE(t.is_keyword());
+  EXPECT_FALSE(t.is_operator());
+
+  EXPECT_EQ(get_spelling(token_kind::kw_origin), "origin");
+  EXPECT_EQ(get_spelling(token_kind::kw_t), "t");
+  EXPECT_EQ(get_spelling(token_kind::op_star_star), "**");
+  EXPECT_EQ(get_spelling(token_kind::op_comma), ",");
+  EXPECT_EQ(get_spelling(token_kind::tk_constant), "");
+}
 
 TEST_F(LexerTest, lexIdentifier) {
   {
@@ -118,13 +94,22 @@ TEST_F(LexerTest, lexNum) {
   }
 }
 
+TEST_F(LexerTest, lexStr) {
+  {
+    lexer l = generate_lexer(R"("abc" "bcd\"" "123")");
+    std::vector<token_kind> expect(3, token_kind::tk_string);
+    check_same(expect, lex_all(l));
+  }
+}
+
 TEST_F(LexerTest, lexOperator) {
   {
-    lexer l = generate_lexer(";)(,-+/**** * **");
+    lexer l = generate_lexer(";)(,-+/}{**** * **");
     std::vector<token_kind> expect = {
         token_kind::op_semi, token_kind::op_r_paren, token_kind::op_l_paren,
         token_kind::op_comma, token_kind::op_minus, token_kind::op_plus,
-        token_kind::op_slash, token_kind::op_star_star, token_kind::op_star_star,
+        token_kind::op_slash, token_kind::op_r_brace, token_kind::op_l_brace,
+        token_kind::op_star_star, token_kind::op_star_star,
         token_kind::op_star, token_kind::op_star_star
     };
     check_same(expect, lex_all(l));
@@ -140,11 +125,11 @@ TEST_F(LexerTest, lexOther) {
   }
   // comment
   {
-    lexer l = generate_lexer("123---a+3tq\n-3-/a//com//12\r\n/-a-/--last");
+    lexer l = generate_lexer("123---a+3tq\n-3\"abc\"-/a//com//12\r\n/-a-/--last");
     std::vector<token_kind> expect = {
         token_kind::tk_constant,
-        token_kind::op_minus, token_kind::tk_constant, token_kind::op_minus,
-        token_kind::op_slash, token_kind::tk_identifier,
+        token_kind::op_minus, token_kind::tk_constant, token_kind::tk_string,
+        token_kind::op_minus, token_kind::op_slash, token_kind::tk_identifier,
         token_kind::op_slash, token_kind::op_minus, token_kind::tk_identifier,
         token_kind::op_minus, token_kind::op_slash
     };
@@ -173,6 +158,19 @@ TEST_F(LexerTest, diag) {
     EXPECT_EQ(data.source_line, "123..2");
     check_same({token_kind::tk_constant, token_kind::tk_unknown, token_kind::tk_constant},
                result);
+  }
+  {
+    lexer l = generate_lexer(R"("abc" "ab
+                                    "123")");
+    std::vector<token_kind> expect(2, token_kind::tk_string);
+    expect.insert(expect.begin() + 1, token_kind::tk_unknown);
+    check_same(expect, lex_all(l));
+    const diag_data& data = consumer.get_data();
+    EXPECT_EQ(data.level, diag_data::WARNING);
+    EXPECT_EQ(data.column_start_idx, 6);
+    EXPECT_EQ(data.column_end_idx, 7);
+    EXPECT_EQ(data._result_diag_message, "missing terminating '\"' character");
+    EXPECT_EQ(data.source_line, R"("abc" "ab)");
   }
 }
 
@@ -216,5 +214,4 @@ TEST_F(LexerTest, cache) {
   }
 }
 
-} // namespace
 INTERPRETER_NAMESPACE_END

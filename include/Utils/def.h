@@ -9,6 +9,7 @@
 /**
  * definition of namespace begin and end
  */
+#define DRAWING ::drawing::
 #define INTERPRETER_NAMESPACE_BEGIN namespace drawing {
 #define INTERPRETER_NAMESPACE_END   }
 

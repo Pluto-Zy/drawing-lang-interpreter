@@ -6,28 +6,31 @@
 #include <Diagnostic/DiagBuilder.h>
 #include <Diagnostic/DiagData.h>
 #include <Diagnostic/DiagConsumer.h>
-#include <iostream>
+#include <sstream>
 
 INTERPRETER_NAMESPACE_BEGIN
 
-const diag_builder& diag_builder::arg(string_ref argument) const {
-  _internal_data->_params.push_back(static_cast<std::string>(argument));
-  return *this;
+void diag_builder::arg(std::string argument) const {
+  _internal_data->_params.emplace_back(std::move(argument));
 }
 
-const diag_builder& diag_builder::arg(std::int64_t value) const {
+void diag_builder::arg(std::int64_t value) const {
   _internal_data->_params.push_back(std::to_string(value));
-  return *this;
 }
 
-const diag_builder& diag_builder::arg(char ch) const {
+void diag_builder::arg(double value) const {
+  std::stringstream s;
+  s.precision(15);
+  s << value;
+  _internal_data->_params.emplace_back(s.str());
+}
+
+void diag_builder::arg(char ch) const {
   _internal_data->_params.push_back({ch});
-  return *this;
 }
 
-const diag_builder& diag_builder::arg(fix_hint hint) const {
+void diag_builder::arg(fix_hint hint) const {
   _internal_data->fix = std::move(hint);
-  return *this;
 }
 
 std::string diag_builder::_process_escape_char(char ch) const {
@@ -42,7 +45,7 @@ std::string diag_builder::_process_escape_char(char ch) const {
   return {'%', ch};
 }
 
-const diag_builder& diag_builder::replace_all_arg() const {
+void diag_builder::replace_all_arg() const {
   std::string result;
   string_ref origin_ref = _internal_data->origin_diag_message;
   result.reserve(origin_ref.size());
@@ -61,7 +64,6 @@ const diag_builder& diag_builder::replace_all_arg() const {
     }
   }
   _internal_data->_result_diag_message = std::move(result);
-  return *this;
 }
 
 void diag_builder::report_to_consumer() const {
@@ -76,7 +78,7 @@ diag_builder& diag_builder::operator=(diag_builder&&) noexcept = default;
 diag_builder::diag_builder(diag_builder&&) noexcept = default;
 diag_builder::~diag_builder() = default;
 
-const diag_builder& operator<<(const diag_builder& lhs, fix_hint hint) {
+diag_builder operator<<(diag_builder lhs, fix_hint hint) {
   lhs.arg(std::move(hint));
   return lhs;
 }

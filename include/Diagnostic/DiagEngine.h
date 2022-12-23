@@ -30,21 +30,13 @@ class diag_consumer;
 class string_ref;
 struct diag_data;
 
-enum error_types {
+enum diag_id {
 #define ERROR(err_type, err_str) err_type,
+#define WARNING(warning_type, warning_str) warning_type,
+#define NOTE(warning_type, warning_str) warning_type,
 #include "DiagTypes.h"
 #undef ERROR
-};
-
-enum warning_types {
-#define WARNING(warning_type, warning_str) warning_type,
-#include "DiagTypes.h"
 #undef WARNING
-};
-
-enum note_types {
-#define NOTE(note_type, note_str) note_type,
-#include "DiagTypes.h"
 #undef NOTE
 };
 
@@ -54,30 +46,12 @@ public:
   void set_file(const file_manager* manager);
   void set_consumer(diag_consumer* consumer);
 
-  [[nodiscard]] diag_builder create_diag(error_types diag_type) const;
+  [[nodiscard]] diag_builder create_diag(diag_id diag_type) const;
 
-  [[nodiscard]] diag_builder create_diag(error_types diag_type,
+  [[nodiscard]] diag_builder create_diag(diag_id diag_type,
                                          std::size_t location) const;
 
-  [[nodiscard]] diag_builder create_diag(error_types diag_type,
-                                         std::size_t start_loc,
-                                         std::size_t end_loc) const;
-
-  [[nodiscard]] diag_builder create_diag(warning_types diag_type) const;
-
-  [[nodiscard]] diag_builder create_diag(warning_types diag_type,
-                                         std::size_t location) const;
-
-  [[nodiscard]] diag_builder create_diag(warning_types diag_type,
-                                         std::size_t start_loc,
-                                         std::size_t end_loc) const;
-
-  [[nodiscard]] diag_builder create_diag(note_types diag_type) const;
-
-  [[nodiscard]] diag_builder create_diag(note_types diag_type,
-                                         std::size_t location) const;
-
-  [[nodiscard]] diag_builder create_diag(note_types diag_type,
+  [[nodiscard]] diag_builder create_diag(diag_id diag_type,
                                          std::size_t start_loc,
                                          std::size_t end_loc) const;
 

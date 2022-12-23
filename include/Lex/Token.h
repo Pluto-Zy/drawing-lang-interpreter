@@ -35,7 +35,8 @@ public:
 
   token_kind get_kind() const { return _kind; }
   void set_kind(token_kind kind) { _kind = kind; }
-  std::size_t get_location() const { return _tok_loc; }
+  std::size_t get_start_location() const { return _tok_loc; }
+  std::size_t get_end_location() const { return _tok_loc + get_length(); }
   void set_location(std::size_t loc) { _tok_loc = loc; }
   string_ref get_data() const { return _data; }
   std::size_t get_length() const { return _data.size(); }
@@ -47,11 +48,18 @@ public:
   bool is_one_of(Ts... kinds) const {
     return (is(kinds) || ...);
   }
+
+  bool is_keyword() const {
+    return ::drawing::is_keyword(_kind);
+  }
+  bool is_operator() const {
+    return ::drawing::is_operator(_kind);
+  }
 };
 
 inline bool operator==(const token& lhs, const token& rhs) {
   return lhs.get_kind() == rhs.get_kind()
-    && lhs.get_location() == rhs.get_location()
+    && lhs.get_start_location() == rhs.get_start_location()
     && lhs.get_length() == rhs.get_length()
     && lhs.get_data() == rhs.get_data();
 }

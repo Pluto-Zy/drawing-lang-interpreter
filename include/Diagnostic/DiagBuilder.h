@@ -46,16 +46,17 @@ public:
 
   [[nodiscard]] const diag_data& get_diag_data() const { return *_internal_data; }
 
-  const diag_builder& arg(string_ref argument) const;
-  const diag_builder& arg(std::int64_t value) const;
-  const diag_builder& arg(char ch) const;
-  const diag_builder& arg(fix_hint hint) const;
+  void arg(std::string argument) const;
+  void arg(std::int64_t value) const;
+  void arg(double value) const;
+  void arg(char ch) const;
+  void arg(fix_hint hint) const;
 
   /**
    * Replaces all replaceable placeholders with
    * corresponding parameters.
    */
-  const diag_builder& replace_all_arg() const;
+  void replace_all_arg() const;
 
   /**
    * Provides the constructed @code{diag_data}
@@ -75,26 +76,44 @@ protected:
   explicit diag_builder(diag_data* data);
 };
 
-inline const diag_builder& operator<<(const diag_builder& lhs, string_ref rhs) {
-  return lhs.arg(rhs);
+inline diag_builder operator<<(diag_builder lhs, string_ref rhs) {
+  lhs.arg(static_cast<std::string>(rhs));
+  return lhs;
+}
+
+inline diag_builder operator<<(diag_builder lhs, std::string rhs) {
+  lhs.arg(std::move(rhs));
+  return lhs;
+}
+
+inline diag_builder operator<<(diag_builder lhs, const char* rhs) {
+  lhs.arg(static_cast<std::string>(rhs));
+  return lhs;
 }
 
 template<class RT, std::enable_if_t<std::is_integral_v<RT> && !std::is_same_v<RT, char>, int> = 0>
-inline const diag_builder& operator<<(const diag_builder& lhs, RT rhs) {
-  return lhs.arg(static_cast<std::int64_t>(rhs));
+inline diag_builder operator<<(diag_builder lhs, RT rhs) {
+  lhs.arg(static_cast<std::int64_t>(rhs));
+  return lhs;
 }
 
-inline const diag_builder& operator<<(const diag_builder& lhs, char rhs) {
-  return lhs.arg(rhs);
+inline diag_builder operator<<(diag_builder lhs, double rhs) {
+  lhs.arg(rhs);
+  return lhs;
 }
 
-inline const diag_builder& operator<<(const diag_builder& lhs, diag_build_finish_t) {
+inline diag_builder operator<<(diag_builder lhs, char rhs) {
+  lhs.arg(rhs);
+  return lhs;
+}
+
+inline diag_builder operator<<(diag_builder lhs, diag_build_finish_t) {
   lhs.replace_all_arg();
   lhs.report_to_consumer();
   return lhs;
 }
 
-const diag_builder& operator<<(const diag_builder& lhs, fix_hint hint);
+diag_builder operator<<(diag_builder lhs, fix_hint hint);
 
 INTERPRETER_NAMESPACE_END
 

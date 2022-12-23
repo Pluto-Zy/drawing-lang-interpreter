@@ -27,6 +27,13 @@ public:
   void report(const diag_data*) override { /* ignore the data */ }
 };
 
+/**
+ * The consumer is used to show diag message to the cmd.
+ */
+class cmd_diag_consumer final : public diag_consumer {
+public:
+  void report(const diag_data* data) override;
+};
 INTERPRETER_NAMESPACE_END
 
 #endif //DRAWING_LANG_INTERPRETER_DIAGCONSUMER_H

@@ -29,7 +29,8 @@ public:
 
   template<std::size_t N>
   [[nodiscard]] char* copy(const char(&str)[N]) const {
-    static_assert(N > 0, "cannot use zero-length string");
+    static_assert(N > 1, "cannot use empty string without \'\\n\'");
+    assert(str[N-2] == '\n');
     char* result = new char[N - 1];
     std::memcpy(result, str, N - 1);
     return result;
@@ -72,7 +73,7 @@ TEST(diag_engine_test, basic) {
     EXPECT_FALSE(data.is_invalid);
   }
   {
-    temp_file_manager manager("some data");
+    temp_file_manager manager("some data\n");
     engine.set_file(&manager);
     diag_builder result = engine.create_diag(err_test_type, 0);
     const diag_data& data = result.get_diag_data();
@@ -94,7 +95,23 @@ TEST(diag_engine_test, basic) {
 TEST(diag_engine_test, location) {
   diag_engine engine;
   {
-    temp_file_manager manager("some data");
+    temp_file_manager manager("\n");
+    engine.set_file(&manager);
+    diag_builder result = engine.create_diag(warn_test_type, 0);
+    const diag_data& data = result.get_diag_data();
+    EXPECT_EQ(data.level, diag_data::WARNING);
+    EXPECT_EQ(data.source_line, "");
+    EXPECT_EQ(data.line_idx, 0);
+    EXPECT_EQ(data.column_start_idx, 0);
+    EXPECT_EQ(data.column_end_idx, 1);
+    EXPECT_EQ(data.origin_diag_message, "This is a test warning message.");
+    EXPECT_TRUE(data.has_file_name());
+    EXPECT_FALSE(data.has_line());
+    EXPECT_TRUE(data.has_column());
+    EXPECT_FALSE(data.is_column_range());
+  }
+  {
+    temp_file_manager manager("some data\n");
     engine.set_file(&manager);
     diag_builder result = engine.create_diag(warn_test_type, 4);
     const diag_data& data = result.get_diag_data();
@@ -110,7 +127,7 @@ TEST(diag_engine_test, location) {
     EXPECT_FALSE(data.is_column_range());
   }
   {
-    temp_file_manager manager("a\nand a new line");
+    temp_file_manager manager("a\nand a new line\n");
     engine.set_file(&manager);
     diag_builder result = engine.create_diag(note_test_type, 4);
     const diag_data& data = result.get_diag_data();
@@ -126,7 +143,7 @@ TEST(diag_engine_test, location) {
     EXPECT_FALSE(data.is_column_range());
   }
   {
-    temp_file_manager manager("a\nand a new line");
+    temp_file_manager manager("a\nand a new line\n");
     engine.set_file(&manager);
     diag_builder result = engine.create_diag(err_test_type, 0);
     const diag_data& data = result.get_diag_data();
@@ -136,7 +153,40 @@ TEST(diag_engine_test, location) {
     EXPECT_EQ(data.column_end_idx, 1);
   }
   {
-    temp_file_manager manager("a\nand a new line");
+    temp_file_manager manager("a\na\n");
+    engine.set_file(&manager);
+    diag_builder result = engine.create_diag(err_test_type, 1);
+    const diag_data& data = result.get_diag_data();
+    EXPECT_EQ(data.source_line, "a");
+    EXPECT_EQ(data.line_idx, 0);
+    EXPECT_EQ(data.column_start_idx, 1);
+    EXPECT_EQ(data.column_end_idx, 2);
+    EXPECT_FALSE(data.is_invalid);
+  }
+  {
+    temp_file_manager manager("a\na\n");
+    engine.set_file(&manager);
+    diag_builder result = engine.create_diag(err_test_type, 3);
+    const diag_data& data = result.get_diag_data();
+    EXPECT_EQ(data.source_line, "a");
+    EXPECT_EQ(data.line_idx, 1);
+    EXPECT_EQ(data.column_start_idx, 1);
+    EXPECT_EQ(data.column_end_idx, 2);
+    EXPECT_FALSE(data.is_invalid);
+  }
+  {
+    temp_file_manager manager("a\n\n");
+    engine.set_file(&manager);
+    diag_builder result = engine.create_diag(err_test_type, 2);
+    const diag_data& data = result.get_diag_data();
+    EXPECT_EQ(data.source_line, "");
+    EXPECT_EQ(data.line_idx, 1);
+    EXPECT_EQ(data.column_start_idx, 0);
+    EXPECT_EQ(data.column_end_idx, 1);
+    EXPECT_FALSE(data.is_invalid);
+  }
+  {
+    temp_file_manager manager("a\nand a new line\n");
     engine.set_file(&manager);
     diag_builder result = engine.create_diag(err_test_type, 3, 3);
     const diag_data& data = result.get_diag_data();
@@ -168,7 +218,7 @@ TEST(diag_engine_test, location) {
     EXPECT_EQ(data.line_idx, 0);
     EXPECT_EQ(data.column_start_idx, 0);
     EXPECT_EQ(data.column_end_idx, 2);
-    EXPECT_TRUE(data.is_invalid);
+    EXPECT_FALSE(data.is_invalid);
   }
   {
     temp_file_manager manager("a\nb\n");
@@ -179,17 +229,6 @@ TEST(diag_engine_test, location) {
     EXPECT_EQ(data.line_idx, 0);
     EXPECT_EQ(data.column_start_idx, 1);
     EXPECT_EQ(data.column_end_idx, 2);
-    EXPECT_TRUE(data.is_invalid);
-  }
-  {
-    temp_file_manager manager("a\nb");
-    engine.set_file(&manager);
-    diag_builder result = engine.create_diag(err_test_type, 2, 3);
-    const diag_data& data = result.get_diag_data();
-    EXPECT_EQ(data.source_line, "b");
-    EXPECT_EQ(data.line_idx, 1);
-    EXPECT_EQ(data.column_start_idx, 0);
-    EXPECT_EQ(data.column_end_idx, 1);
     EXPECT_FALSE(data.is_invalid);
   }
   {
@@ -227,7 +266,7 @@ TEST(diag_engine_test, location) {
     EXPECT_FALSE(data.is_invalid);
   }
   {
-    temp_file_manager manager("a\nstr\nstring");
+    temp_file_manager manager("a\nstr\nstring\n");
     engine.set_file(&manager);
     diag_builder result = engine.create_diag(err_test_type, 7, 10);
     const diag_data& data = result.get_diag_data();
@@ -303,7 +342,7 @@ TEST(diag_builder_test, fix_hint) {
   std::unique_ptr<test_diag_consumer> consumer = std::make_unique<test_diag_consumer>();
   engine.set_consumer(consumer.get());
   {
-    temp_file_manager manager("ab\nand a new line");
+    temp_file_manager manager("ab\nand a new line\n");
     engine.set_file(&manager);
     engine.create_diag(err_test_type)
       << engine.create_insertion_after_location(4, "insert")
